@@ -1,0 +1,526 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>ImpactScope — Meteor Madness</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <style>
+    :root{--bg:#05040a;--panel:#0f1220;--accent1:#7b61ff;--accent2:#ff6b6b;--glass: rgba(255,255,255,0.04);}
+    html,body{height:100%;margin:0;background:radial-gradient(circle at 20% 10%, #09102a 0%, var(--bg) 60%); color:#eaf1ff; font-family:Inter,system-ui,Arial;}
+    #app{display:flex;height:100vh;gap:18px;padding:18px;}
+    #vis{flex:1;border-radius:12px;overflow:hidden;position:relative;box-shadow:0 8px 30px rgba(0,0,0,0.7);}
+    #panel{width:420px;background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));border-radius:12px;padding:18px;box-shadow:0 6px 24px rgba(0,0,0,0.6);overflow:auto;}
+    h1{margin:0;font-size:18px;} label{display:block;margin-top:12px;font-size:13px;opacity:0.85}
+    input[type=range]{width:100%}.small{font-size:12px;opacity:0.8}
+    .btn{display:inline-block;margin-top:12px;padding:10px 14px;border-radius:10px;cursor:pointer;background:linear-gradient(90deg,var(--accent1),var(--accent2));color:#05040a;font-weight:700;border:none}
+    .stat{background:var(--glass);padding:10px;border-radius:10px;margin-top:12px;font-size:13px}
+    #globeViz{position:absolute;inset:0}
+    .input-row{display:flex;gap:8px;align-items:center}
+    select,input{background:#0b0f1a;color:#eaf1ff;border:1px solid rgba(255,255,255,0.04);padding:8px;border-radius:8px}
+    .hint{font-size:12px;color:#bcd7ff;opacity:0.9}.footer{font-size:12px;opacity:0.7;margin-top:10px}
+    .overlay-msg{position:absolute;left:16px;bottom:16px;z-index:10;background:rgba(0,0,0,0.45);padding:8px;border-radius:8px}
+    .error-overlay{position:absolute;right:16px;top:16px;z-index:20;background:rgba(255,80,80,0.12);color:#ffdfe0;padding:10px;border-radius:8px;border:1px solid rgba(255,80,80,0.18)}
+    /* debug box */
+    #debugBox { position:absolute; left:16px; top:90px; z-index:30; background: rgba(0,0,0,0.45); padding:8px; border-radius:6px; font-size:12px; display:none; color:#cfefff; max-width:400px; }
+    #debugToggle { margin-left:8px; padding:6px 8px; font-size:12px; border-radius:6px; background:#222; color:#fff; border:none; cursor:pointer;}
+  </style>
+</head>
+<body>
+  <div id="app">
+    <div id="vis">
+      <div id="globeViz"></div>
+      <div style="position:absolute;left:16px;top:16px;z-index:5;background:rgba(0,0,0,0.35);padding:8px;border-radius:8px">
+        <div style="font-weight:700">ImpactScope</div>
+        <div class="small">Click globe to choose impact location. Click Simulate to see asteroid approach + impact. <button id="debugToggle" title="Show debug info">Debug</button></div>
+      </div>
+      <div id="globeError" class="error-overlay" style="display:none;">3D globe unavailable — manual lat/lon still works.</div>
+      <div id="globeTip" class="overlay-msg">Tip: click the globe or enter lat/lon, then Simulate Impact.</div>
+
+      <div id="debugBox"></div>
+    </div>
+
+    <div id="panel">
+      <h1>ImpactScope — Meteor Madness</h1>
+      <div class="hint">Live NASA NeoWs data + visual simulation. Outputs are approximate for demo/education.</div>
+
+      <label>Asteroid (live)</label>
+      <select id="neoSelect"></select>
+      <div id="fetchStatus" class="small">Loading asteroids…</div>
+
+      <label>Diameter (meters)</label>
+      <input id="diam" type="range" min="5" max="50000" value="50"><div class="small">Current: <span id="diamVal">50</span> m</div>
+
+      <label>Velocity (km/s)</label>
+      <input id="vel" type="range" min="5" max="80" value="20"><div class="small">Current: <span id="velVal">20</span> km/s</div>
+
+      <label>Selected impact lat,lon</label>
+      <div class="input-row">
+        <input id="lat" placeholder="lat" style="width:120px">
+        <input id="lon" placeholder="lon" style="width:120px">
+        <button id="useCenter" class="btn" style="padding:6px 10px">Center</button>
+      </div>
+
+      <button id="simulate" class="btn">Simulate Impact</button>
+
+      <div id="results" class="stat">
+        <div><strong>TNT Equivalent:</strong> <span id="tnt">—</span></div>
+        <div><strong>Approx. crater diameter:</strong> <span id="crater">—</span></div>
+        <div><strong>Approx. blast radius:</strong> <span id="blast">—</span></div>
+        <div><strong>Equivalent earthquake Mw:</strong> <span id="eq">—</span></div>
+      </div>
+
+      <div class="credits">Data: NASA NeoWs (proxied) • Calculations: kinetic energy, simple crater scaling • UI: Three.js + three-globe.</div>
+      <div class="footer">Prototype visualizes impacts; results are demonstrative and approximate.</div>
+    </div>
+  </div>
+
+  <!-- CDNs -->
+  <script src="https://cdn.jsdelivr.net/npm/three@0.156.0/build/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three-globe@2.27.0/dist/three-globe.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.2/dist/gsap.min.js"></script>
+
+  <script>
+  window.addEventListener('DOMContentLoaded', async () => {
+    console.log('UI loaded — starting init');
+
+    const neoSelect = document.getElementById('neoSelect'),
+          fetchStatus = document.getElementById('fetchStatus'),
+          diam = document.getElementById('diam'), diamVal = document.getElementById('diamVal'),
+          vel = document.getElementById('vel'), velVal = document.getElementById('velVal'),
+          latIn = document.getElementById('lat'), lonIn = document.getElementById('lon'),
+          simulateBtn = document.getElementById('simulate'),
+          tntEl = document.getElementById('tnt'), craterEl = document.getElementById('crater'),
+          blastEl = document.getElementById('blast'), eqEl = document.getElementById('eq'),
+          globeError = document.getElementById('globeError'),
+          debugBox = document.getElementById('debugBox'),
+          debugToggle = document.getElementById('debugToggle');
+
+    debugToggle.addEventListener('click', () => { debugBox.style.display = debugBox.style.display === 'none' ? 'block' : 'none'; });
+
+    diam.addEventListener('input', ()=> diamVal.textContent = diam.value );
+    vel.addEventListener('input', ()=> velVal.textContent = vel.value );
+
+    async function fetchNeos() {
+      fetchStatus.textContent = 'Loading NEOs (this may take a second)…';
+      try {
+        const resp = await fetch('/api/neos');
+        const j = await resp.json();
+        if (j.error) { console.error(j); fallback(); return; }
+        const neos = j.neos || [];
+        neoSelect.innerHTML = '';
+        neos.slice(0,100).forEach(o => {
+          try{
+            const estMin = o.est_diameter_m_min;
+            const estMax = o.est_diameter_m_max;
+            const estDiam = estMin && estMax ? Math.round((estMin+estMax)/2) : (o.est_diameter_m_avg || 50);
+            const relVel = o.est_velocity_km_s || 20;
+            const payload = { id:o.id||o.neo_reference_id||o.id, name:o.name||o.id, est_diameter_m:estDiam, est_vel_km_s:relVel };
+            const opt = document.createElement('option'); opt.value = JSON.stringify(payload);
+            opt.textContent = `${payload.name} — ~${payload.est_diameter_m} m @ ${payload.est_vel_km_s} km/s`;
+            neoSelect.appendChild(opt);
+          }catch(e){}
+        });
+        const imp = { id:'impactor-2025', name:'Impactor-2025 (demo)', est_diameter_m:300, est_vel_km_s:25 };
+        const optImp = document.createElement('option'); optImp.value = JSON.stringify(imp); optImp.textContent = `${imp.name} — ~${imp.est_diameter_m} m`;
+        neoSelect.appendChild(optImp);
+
+        fetchStatus.textContent = `Loaded ${neoSelect.options.length} asteroids (preview).`;
+
+        if (neoSelect.options.length>0) {
+          const v = JSON.parse(neoSelect.options[0].value);
+          if (v.est_diameter_m && v.est_diameter_m > Number(diam.max)) diam.max = Math.ceil(v.est_diameter_m * 1.2);
+          diam.value = v.est_diameter_m; diamVal.textContent = diam.value;
+          vel.value = v.est_vel_km_s; velVal.textContent = vel.value;
+        }
+
+      } catch(err){ console.error('fetchNeos failed', err); fallback(); }
+    }
+    function fallback(){
+      neoSelect.innerHTML='';
+      const demo=[{id:'demo50',name:'Demo 50m',est_diameter_m:50,est_vel_km_s:20},{id:'impactor-2025',name:'Impactor-2025',est_diameter_m:300,est_vel_km_s:25}];
+      demo.forEach(d=>{ const o=document.createElement('option'); o.value=JSON.stringify(d); o.textContent=`${d.name} — ~${d.est_diameter_m} m @ ${d.est_vel_km_s} km/s`; neoSelect.appendChild(o);});
+      fetchStatus.textContent='Using demo NEOs';
+      const v=JSON.parse(neoSelect.value); diam.value=v.est_diameter_m; diamVal.textContent=diam.value; vel.value=v.est_vel_km_s; velVal.textContent=vel.value;
+    }
+    fetchNeos();
+
+    neoSelect.addEventListener('change', ()=>{
+      try {
+        const sel = neoSelect.value ? JSON.parse(neoSelect.value) : null;
+        if(sel) {
+          if (sel.est_diameter_m && sel.est_diameter_m > Number(diam.max)) diam.max = Math.ceil(sel.est_diameter_m * 1.2);
+          if(sel.est_diameter_m) { diam.value = sel.est_diameter_m; diamVal.textContent = diam.value; }
+          if(sel.est_vel_km_s) { vel.value = sel.est_vel_km_s; velVal.textContent = vel.value; }
+        }
+      } catch(e){ console.error('neoSelect change handler failed', e); }
+    });
+
+    // Three/Globe setup
+    let scene, camera, renderer, globe;
+    const defaultRadius = 100;
+    let isPointerDown = false;
+    let activeAsteroid=null, activeTrail=null, activeRings=[];
+
+    try {
+      if (typeof THREE === 'undefined' || typeof ThreeGlobe === 'undefined') throw new Error('Three/ThreeGlobe missing');
+
+      const w = Math.max(300, window.innerWidth - 480);
+      const h = Math.max(240, window.innerHeight - 36);
+
+      renderer = new THREE.WebGLRenderer({antialias:true});
+      renderer.setPixelRatio(window.devicePixelRatio || 1);
+      renderer.setSize(w, h);
+      renderer.setClearColor(0x05040a);
+      document.getElementById('globeViz').appendChild(renderer.domElement);
+
+      scene = new THREE.Scene();
+      camera = new THREE.PerspectiveCamera(40, w/h, 0.1, 4000); camera.position.z = 250;
+
+      globe = new ThreeGlobe({ animateIn: true })
+        .globeImageUrl('https://unpkg.com/three-globe/example/img/earth-dark.jpg')
+        .bumpImageUrl('https://unpkg.com/three-globe/example/img/earth-topology.png');
+
+      scene.add(globe);
+      scene.add(new THREE.AmbientLight(0xbbf0ff, 0.6));
+      const dir = new THREE.DirectionalLight(0xffffff, 0.6); dir.position.set(5,3,5); scene.add(dir);
+
+      // pointer rotate (no auto-rotate) — clamp X so globe can't flip end-over-end
+      let lastX=0,lastY=0;
+      renderer.domElement.addEventListener('pointerdown', e => { isPointerDown=true; lastX=e.clientX; lastY=e.clientY; });
+      window.addEventListener('pointerup', ()=> isPointerDown=false);
+      window.addEventListener('pointermove', e => {
+        if(!isPointerDown) return;
+        const dx = (e.clientX-lastX) * 0.002, dy = (e.clientY-lastY) * 0.002;
+        globe.rotation.y += dx;
+        globe.rotation.x += dy;
+        // clamp rotation.x to [-89deg, +89deg] to avoid flipping hemisphere which can invert lon/lat mapping
+        const maxTilt = Math.PI * 0.49;
+        if (globe.rotation.x > maxTilt) globe.rotation.x = maxTilt;
+        if (globe.rotation.x < -maxTilt) globe.rotation.x = -maxTilt;
+        lastX=e.clientX; lastY=e.clientY;
+      });
+
+      window.addEventListener('resize', ()=>{ const w2=Math.max(300,window.innerWidth-480), h2=Math.max(240,window.innerHeight-36); renderer.setSize(w2,h2); camera.aspect=w2/h2; camera.updateProjectionMatrix(); });
+
+      (function animate(){ requestAnimationFrame(animate);
+        if(activeAsteroid && activeTrail){
+          const posArr = activeTrail.geometry.attributes.position.array;
+          posArr[3] = activeAsteroid.position.x; posArr[4] = activeAsteroid.position.y; posArr[5] = activeAsteroid.position.z;
+          activeTrail.geometry.attributes.position.needsUpdate = true;
+        }
+        renderer.render(scene,camera);
+      })();
+
+      // click handler: compute lat/lon from globe mesh LOCAL coords when available,
+      // create marker parented to globe mesh and store marker LOCAL position to be authoritative.
+      renderer.domElement.addEventListener('click', (evt) => {
+        try {
+          const rect = renderer.domElement.getBoundingClientRect();
+          const x = ((evt.clientX - rect.left) / rect.width) * 2 - 1;
+          const y = -((evt.clientY - rect.top) / rect.height) * 2 + 1;
+          const mouse = new THREE.Vector2(x, y);
+          const raycaster = new THREE.Raycaster();
+          raycaster.setFromCamera(mouse, camera);
+
+          let intersects = [];
+          const globeMeshAvailable = globe && typeof globe.globeMesh === 'function' && globe.globeMesh();
+          if (globeMeshAvailable) {
+            intersects = raycaster.intersectObject(globe.globeMesh(), true);
+          }
+
+          let surfacePoint = null;
+          const R = (globe && typeof globe.globeRadius === 'function') ? globe.globeRadius() : defaultRadius;
+
+          if (intersects && intersects.length) {
+            const useful = intersects.find(i => i && i.point);
+            if (useful) surfacePoint = useful.point.clone(); // world space
+          }
+
+          if (!surfacePoint) {
+            const origin = raycaster.ray.origin.clone();
+            const dir = raycaster.ray.direction.clone().normalize();
+            const a = dir.dot(dir);
+            const b = 2 * origin.dot(dir);
+            const c = origin.dot(origin) - (R * R);
+            const disc = b * b - 4 * a * c;
+            if (disc >= 0) {
+              const sqrtD = Math.sqrt(disc);
+              const t1 = (-b - sqrtD) / (2 * a);
+              const t2 = (-b + sqrtD) / (2 * a);
+              const t = [t1, t2].filter(v => v > 0).sort((A,B)=>A-B)[0];
+              if (t !== undefined) surfacePoint = origin.add(dir.multiplyScalar(t));
+            }
+          }
+
+          if (!surfacePoint) return;
+          surfacePoint = surfacePoint.clone().normalize().multiplyScalar(R);
+
+          // compute lat/lon using mesh-local coords if available
+          let lat, lon;
+          if (globeMeshAvailable) {
+            const globeMesh = globe.globeMesh();
+            if (globeMesh.updateMatrixWorld) globeMesh.updateMatrixWorld(true);
+            const local = globeMesh.worldToLocal(surfacePoint.clone());
+            const latRad = Math.asin(local.y / R);
+            const lonRad = Math.atan2(local.z, local.x);
+            lat = latRad * 180 / Math.PI;
+            lon = lonRad * 180 / Math.PI;
+          } else {
+            const latRad = Math.asin(surfacePoint.y / R);
+            const lonRad = Math.atan2(surfacePoint.z, surfacePoint.x);
+            lat = latRad * 180 / Math.PI;
+            lon = lonRad * 180 / Math.PI;
+          }
+
+          latIn.value = parseFloat(lat.toFixed(6));
+          lonIn.value = parseFloat(lon.toFixed(6));
+
+          // remove previous marker
+          if (window.currentMarker && window.currentMarker.parent) {
+            try { window.currentMarker.parent.remove(window.currentMarker); } catch(e) {}
+          }
+
+          const markerGeom = new THREE.SphereGeometry(2.6, 12, 12);
+          const markerMat = new THREE.MeshStandardMaterial({ emissive: 0xff6b6b, emissiveIntensity: 0.9, color: 0xff9b9b });
+          const m = new THREE.Mesh(markerGeom, markerMat);
+
+          if (globeMeshAvailable) {
+            const globeMesh = globe.globeMesh();
+            // convert the surfacePoint (world) into the mesh's local coordinates and parent the marker — local pos is authoritative
+            const localPos = globeMesh.worldToLocal(surfacePoint.clone());
+            m.position.copy(localPos);
+            globeMesh.add(m);
+
+            // save authoritative local coordinates (so simulate uses gm.localToWorld(latlonLocal) later)
+            window._lastClickedLocalPos = localPos.clone();
+            window._lastClickedOnGlobeMesh = true;
+          } else {
+            m.position.copy(surfacePoint);
+            scene.add(m);
+            // save world fallback
+            window._lastClickedWorldPos = surfacePoint.clone();
+            window._lastClickedOnGlobeMesh = false;
+          }
+          window.currentMarker = m;
+
+          // store lat/lon too (human readable)
+          window._lastClickedLat = lat;
+          window._lastClickedLon = lon;
+
+          // debug output
+          if (debugBox.style.display !== 'none') {
+            debugBox.innerText = `CLICK\nlat=${lat.toFixed(6)} lon=${lon.toFixed(6)}\nlastLocal=${window._lastClickedLocalPos ? `${window._lastClickedLocalPos.x.toFixed(2)},${window._lastClickedLocalPos.y.toFixed(2)},${window._lastClickedLocalPos.z.toFixed(2)}` : 'NONE'}\nlastWorld=${window._lastClickedWorldPos ? `${window._lastClickedWorldPos.x.toFixed(2)},${window._lastClickedWorldPos.y.toFixed(2)},${window._lastClickedWorldPos.z.toFixed(2)}` : 'NONE'}`;
+          }
+
+        } catch (err) {
+          console.error('click->latlon failed', err);
+        }
+      });
+
+    } catch(err) {
+      console.error('3D init failed:', err); globeError.style.display='block';
+    }
+
+    // lat/lon -> local vector in same convention as the inverse used on click
+    function latLngToVector3_local(lat, lng, radius = (globe && typeof globe.globeRadius === 'function' ? globe.globeRadius() : defaultRadius)){
+      const latRad = lat * Math.PI/180;
+      const lonRad = lng * Math.PI/180;
+      const x = radius * Math.cos(latRad) * Math.cos(lonRad);
+      const y = radius * Math.sin(latRad);
+      const z = radius * Math.cos(latRad) * Math.sin(lonRad);
+      return new THREE.Vector3(x,y,z);
+    }
+
+    function kmToWorld(km){
+      const R = (globe && typeof globe.globeRadius === 'function') ? globe.globeRadius() : defaultRadius;
+      return (km / 6371) * R;
+    }
+
+    function clearActive(){
+      if(activeAsteroid && scene){ scene.remove(activeAsteroid); try{ activeAsteroid.geometry.dispose(); activeAsteroid.material.dispose(); }catch(e){} activeAsteroid=null; }
+      if(activeTrail && scene){ scene.remove(activeTrail); try{ activeTrail.geometry.dispose(); activeTrail.material.dispose(); }catch(e){} activeTrail=null; }
+      activeRings.forEach(o=>{ if(scene) scene.remove(o); try{ if(o.geometry) o.geometry.dispose(); if(o.material) o.material.dispose(); }catch(e){} });
+      activeRings = [];
+    }
+
+    // Always prefer the saved mesh-local position if available (robust against later rotations).
+    async function simulateImpact(lat, lon, diameter_m, velocity_km_s){
+      try {
+        // fallback to last clicked lat/lon if inputs empty
+        if((!Number.isFinite(lat) || !Number.isFinite(lon)) && (window._lastClickedLat !== undefined && window._lastClickedLon !== undefined)) {
+          lat = window._lastClickedLat;
+          lon = window._lastClickedLon;
+        }
+
+        const resp = await fetch('/api/impact', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({diameter_m, velocity_km_s}) });
+        const j = await resp.json();
+        if(j.error){ alert('Impact calc error: '+j.error); return; }
+
+        tntEl.textContent = `${Number(j.tnt_kilotons).toLocaleString(undefined,{maximumFractionDigits:1})} kilotons (${Number(j.tnt_megatons).toFixed(3)} Mt)`;
+        craterEl.textContent = `${j.crater_km.toFixed(2)} km`;
+        blastEl.textContent = `${j.blast_km.toFixed(2)} km`;
+        eqEl.textContent = `${j.equivalent_earthquake_Mw.toFixed(2)} Mw`;
+
+        const R = (globe && typeof globe.globeRadius === 'function') ? globe.globeRadius() : defaultRadius;
+
+        clearActive();
+
+        // --- compute authoritative impact world point ---
+        let impactPoint = null;
+        const gm = globe && typeof globe.globeMesh === 'function' ? globe.globeMesh() : null;
+
+        // Prefer localPos if it exists (marker was parented to globe mesh)
+        if (window._lastClickedLocalPos && gm) {
+          // ensure matrices are up-to-date
+          try { if (gm.updateMatrixWorld) gm.updateMatrixWorld(true); if (globe && globe.updateMatrixWorld) globe.updateMatrixWorld(true); } catch(e){}
+          impactPoint = gm.localToWorld(window._lastClickedLocalPos.clone());
+        } else if (window._lastClickedWorldPos) {
+          impactPoint = window._lastClickedWorldPos.clone();
+        } else {
+          // compute from lat/lon as fallback (local coords -> world using globe mesh if possible)
+          const localVec = latLngToVector3_local(lat, lon, R);
+          try { if (gm && gm.updateMatrixWorld) gm.updateMatrixWorld(true); } catch(e){}
+          if (gm && typeof gm.localToWorld === 'function') {
+            impactPoint = gm.localToWorld(localVec.clone());
+          } else {
+            impactPoint = localVec.clone();
+            if (globe && globe.quaternion) impactPoint.applyQuaternion(globe.quaternion);
+          }
+        }
+
+        // snap to radius
+        impactPoint = impactPoint.clone().normalize().multiplyScalar(R);
+
+        // debug: show the impactPoint coordinates
+        if (debugBox.style.display !== 'none') {
+          const camPos = camera.getWorldPosition(new THREE.Vector3());
+          debugBox.innerText = `SIMULATE\nlat=${lat?.toFixed(6)} lon=${lon?.toFixed(6)}\nimpactWorld=${impactPoint.x.toFixed(2)},${impactPoint.y.toFixed(2)},${impactPoint.z.toFixed(2)}\ncamera=${camPos.x.toFixed(2)},${camPos.y.toFixed(2)},${camPos.z.toFixed(2)}\n_lastClickedLocal=${window._lastClickedLocalPos ? `${window._lastClickedLocalPos.x.toFixed(2)},${window._lastClickedLocalPos.y.toFixed(2)},${window._lastClickedLocalPos.z.toFixed(2)}` : 'NONE'}`;
+        }
+
+        // compute start position so asteroid comes from camera side
+        const cameraWorldPos = camera.getWorldPosition(new THREE.Vector3());
+        const camToImpact = cameraWorldPos.distanceTo(impactPoint);
+        const dirImpactToCamera = cameraWorldPos.clone().sub(impactPoint).normalize();
+        const margin = Math.max(R * 0.8, 50);
+        const startDistance = camToImpact + margin;
+        const startPos = impactPoint.clone().add(dirImpactToCamera.multiplyScalar(startDistance));
+        const jitterScale = Math.max(1, R * 0.02);
+        startPos.add(new THREE.Vector3((Math.random()-0.5)*jitterScale, (Math.random()-0.5)*jitterScale, (Math.random()-0.5)*jitterScale));
+
+        // asteroid visual sizing (cap so it never fills the screen)
+        const astRadius = Math.max(1, Math.min(50, diameter_m / 200));
+        const aGeom = new THREE.SphereGeometry(astRadius, 18, 14);
+        const aMat = new THREE.MeshStandardMaterial({ color:0xffd28a, emissive:0xff8b4d, emissiveIntensity:0.9 });
+        const asteroid = new THREE.Mesh(aGeom,aMat);
+        asteroid.position.copy(startPos);
+        scene.add(asteroid);
+        activeAsteroid = asteroid;
+
+        // trail
+        const trailGeom = new THREE.BufferGeometry();
+        const posArr = new Float32Array([startPos.x, startPos.y, startPos.z, startPos.x, startPos.y, startPos.z]);
+        trailGeom.setAttribute('position', new THREE.BufferAttribute(posArr, 3));
+        const trailMat = new THREE.LineBasicMaterial({color:0xff9b6b, linewidth:2, opacity:0.8, transparent:true});
+        const trail = new THREE.Line(trailGeom, trailMat);
+        scene.add(trail);
+        activeTrail = trail;
+
+        const craterWorld = Math.max(0.5, kmToWorld(j.crater_km));
+        const blastWorld = Math.max(1, kmToWorld(j.blast_km));
+
+        const craterGeom = new THREE.RingGeometry(Math.max(0.001, craterWorld * 0.9), craterWorld * 1.1, 64);
+        const craterMat = new THREE.MeshBasicMaterial({ color:0xff4444, side: THREE.DoubleSide, transparent:true, opacity:0 });
+        const craterRing = new THREE.Mesh(craterGeom, craterMat);
+        craterRing.position.copy(impactPoint);
+        craterRing.lookAt(impactPoint.clone().add(impactPoint.clone().normalize()));
+        scene.add(craterRing);
+        activeRings.push(craterRing);
+
+        const blastGeom = new THREE.RingGeometry(Math.max(0.001, blastWorld * 0.9), blastWorld * 1.1, 64);
+        const blastMat = new THREE.MeshBasicMaterial({ color:0xffaa44, side: THREE.DoubleSide, transparent:true, opacity:0 });
+        const blastRing = new THREE.Mesh(blastGeom, blastMat);
+        blastRing.position.copy(impactPoint);
+        blastRing.lookAt(impactPoint.clone().add(impactPoint.clone().normalize()));
+        scene.add(blastRing);
+        activeRings.push(blastRing);
+
+        const explGeom = new THREE.SphereGeometry(1.0, 24, 18);
+        const explMat = new THREE.MeshStandardMaterial({ color:0xffa84d, transparent:true, opacity:0, emissive:0xff6b6b, emissiveIntensity:2 });
+        const explosion = new THREE.Mesh(explGeom, explMat);
+        explosion.position.copy(impactPoint);
+        explosion.scale.set(0.01,0.01,0.01);
+        scene.add(explosion);
+        activeRings.push(explosion);
+
+        const travelTime = Math.max(1.5, 3 - (velocity_km_s / 40));
+
+        gsap.to(asteroid.position, {
+          x:impactPoint.x, y:impactPoint.y, z:impactPoint.z,
+          duration:travelTime,
+          ease:"power2.in",
+          onComplete:()=>{
+            asteroid.visible = false;
+            explosion.scale.set(0.1, 0.1, 0.1);
+            gsap.to(explosion.scale, { x: craterWorld*2, y: craterWorld*2, z: craterWorld*2, duration: 0.3, ease: "power2.out" });
+            gsap.to(explosion.material, { opacity: 1, duration: 0.12, onComplete: ()=> gsap.to(explosion.material, { opacity: 0, duration: 0.5 }) });
+
+            craterRing.scale.set(0.1,0.1,0.1);
+            gsap.to(craterRing.scale, { x:1, y:1, z:1, duration:0.4, ease:"power3.out" });
+            gsap.to(craterMat, { opacity:0.8, duration:0.2, onComplete: ()=> gsap.to(craterMat, { opacity:0.3, duration:2 }) });
+
+            setTimeout(() => {
+              blastRing.scale.set(0.5,0.5,0.5);
+              gsap.to(blastRing.scale, { x:1,y:1,z:1, duration:0.6, ease:"power2.out"});
+              gsap.to(blastMat, { opacity:0.5, duration:0.3, onComplete: ()=> gsap.to(blastMat, { opacity:0, duration:3 }) });
+            }, 200);
+
+            gsap.to(trailMat, { opacity: 0, duration:1, delay:0.5 });
+
+            setTimeout(()=>{ clearActive(); }, 5000);
+          }
+        });
+
+      } catch(err) {
+        console.error('simulateImpact failed', err);
+        alert('Impact simulation failed — see console.');
+      }
+    }
+
+    simulateBtn.addEventListener('click', ()=>{
+      const sel = neoSelect.value ? JSON.parse(neoSelect.value) : null;
+      const diameter_m = Number(diam.value) || (sel ? sel.est_diameter_m : 50);
+      const velocity_km_s = Number(vel.value) || (sel ? sel.est_vel_km_s : 20);
+      let lat = Number(latIn.value), lon = Number(lonIn.value);
+      if((!Number.isFinite(lat) || !Number.isFinite(lon)) && (window._lastClickedLat !== undefined && window._lastClickedLon !== undefined)) {
+        lat = window._lastClickedLat; lon = window._lastClickedLon;
+      }
+      if(!Number.isFinite(lat) || !Number.isFinite(lon)){
+        alert('Please pick impact location (click globe or fill lat/lon).');
+        return;
+      }
+      simulateImpact(lat, lon, diameter_m, velocity_km_s);
+    });
+
+    // Center button (keeps behavior)
+    document.getElementById('useCenter').addEventListener('click', ()=>{
+      const la = parseFloat(latIn.value), lo = parseFloat(lonIn.value);
+      if(!Number.isFinite(la) || !Number.isFinite(lo)){
+        alert('Enter valid lat/lon');
+        return;
+      }
+      if(globe) {
+        gsap.to(globe.rotation, {
+          duration:1.0,
+          y: -(lo * Math.PI/180),
+          x: (la * Math.PI/180)
+        });
+      } else {
+        alert('Globe not available.');
+      }
+    });
+
+  }); // DOMContentLoaded
+  </script>
+</body>
+</html>
