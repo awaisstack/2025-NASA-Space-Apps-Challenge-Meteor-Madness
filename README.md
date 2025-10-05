@@ -1,11 +1,11 @@
-# 🌍 Meteor Madness — 2025 NASA Space Apps Challenge
+# Meteor Madness — 2025 NASA Space Apps Challenge
 
 **Challenge Theme:** Meteor Madness  
 **Event:** 2025 NASA International Space Apps Challenge  
 
 ---
 
-## 🚀 Overview
+##  Overview
 
 **Meteor Madness** is an interactive asteroid impact visualization and simulation tool built for the **2025 NASA Space Apps Challenge**.  
 It uses **real NASA Near-Earth Object (NEO) data** to model asteroid impacts, visualize crater effects, and estimate the destructive potential of hypothetical impactors like **“Impactor-2025.”**
@@ -14,17 +14,17 @@ This project bridges **science and accessibility** — allowing both the public 
 
 ---
 
-## 🛰️ Features
+## Features
 
-- 🔭 **Live NASA NEO Data:** Fetches real asteroid parameters (size, velocity, hazard status) from NASA’s [NeoWs API](https://api.nasa.gov/).
-- 💥 **Impact Physics Simulation:** Calculates energy, crater size, blast radius, and equivalent earthquake magnitude based on user inputs.
-- 🌎 **3D Earth Visualization:** Interactive globe (using Three.js + ThreeGlobe) to display simulated impact zones dynamically.
-- 🧮 **Scientific Accuracy:** Uses simplified physical formulas with adjustable parameters (density, velocity, etc.) to estimate impact outcomes.
-- 🧠 **Educational Purpose:** Helps users visualize the potential effects of asteroid impacts and understand the science behind planetary defense.
+- **Live NASA NEO Data:** Fetches real asteroid parameters (size, velocity, hazard status) from NASA’s [NeoWs API](https://api.nasa.gov/).
+- **Impact Physics Simulation:** Calculates energy, crater size, blast radius, and equivalent earthquake magnitude based on user inputs.
+- **3D Earth Visualization:** Interactive globe (using Three.js + ThreeGlobe) to display simulated impact zones dynamically.
+- **Scientific Accuracy:** Uses simplified physical formulas with adjustable parameters (density, velocity, etc.) to estimate impact outcomes.
+- **Educational Purpose:** Helps users visualize the potential effects of asteroid impacts and understand the science behind planetary defense.
 
 ---
 
-## 🧩 Tech Stack
+## Tech Stack
 
 | Layer | Technology |
 |-------|-------------|
@@ -48,7 +48,7 @@ This project bridges **science and accessibility** — allowing both the public 
 
 ---
 
-## 🧮 Example Simulation
+## Example Simulation
 
 **Scenario:** A 20 km asteroid traveling at 11 km/s  
 **Results:**
@@ -87,33 +87,35 @@ echo NASA_API_KEY=YOUR_API_KEY > .env
 # 5️⃣ Run the application
 python app.py
 ```
-Then open your browser and visit:
-👉 http://localhost:5000
+markdown
+Copy code
+## 🚀 Run the App
+Then open your browser and visit:  
+👉 **http://localhost:5000**
+
 ---
-📡 Data Source
-NASA Near-Earth Object (NEO) API
+
+## 📡 Data Source
+**NASA Near-Earth Object (NEO) API**
+
 Provides orbital and physical data for asteroids and comets, including:
 
--Size, velocity, and estimated diameter
--Hazard classification
--Close-approach distance and relative velocity
+- Size, velocity, and estimated diameter  
+- Hazard classification  
+- Close-approach distance and relative velocity  
 
-🔗 NASA NEO API Documentation: https://api.nasa.gov/
----
-🧑‍🚀 Future Improvements
-🌠 Add asteroid deflection/mitigation simulations
-🧭 Integrate USGS topography & seismic data
-🎓 Include educational pop-ups explaining impact science
-🎮 Add gamified “Defend Earth” mode
----
-📜 License
-This project is open source and free to use under the MIT License.
-All NASA data is publicly accessible under NASA’s Open Data Policy.
----
-🪐 Acknowledgments
+🔗 **NASA NEO API Documentation:** [https://api.nasa.gov/](https://api.nasa.gov/)
 
-Special thanks to:
-NASA — for the NEO datasets and open API access
-USGS — for geological and seismic datasets (future integration)
-Space Apps Global Community — for inspiration, mentorship, and collaboration
 ---
+
+## 🧑‍🚀 Future Improvements
+Add asteroid deflection / mitigation simulations  
+Integrate USGS topography & seismic data  
+Include educational pop-ups explaining impact science  
+Add gamified “Defend Earth” mode  
+
+---
+
+## License
+This project is open source and free to use under the **MIT License**.  
+All NASA data is publicly accessible under **NASA’s Open Data Policy**.
