@@ -87,8 +87,6 @@ echo NASA_API_KEY=YOUR_API_KEY > .env
 # 5️⃣ Run the application
 python app.py
 ```
-markdown
-Copy code
 ## 🚀 Run the App
 Then open your browser and visit:  
 👉 **http://localhost:5000**
