@@ -1,5 +1,5 @@
-# ☄️ ImpactScope — Meteor Madness
-### 🌍 Cinematic 3D Planetary Defense Observatory & NASA Impact Physics Simulator
+# ImpactScope: Meteor Madness
+### Cinematic 3D Planetary Defense Observatory and NASA Impact Physics Simulator
 
 <div align="center">
 
@@ -10,52 +10,52 @@
 [![Vercel Ready](https://img.shields.io/badge/Vercel-Serverless%20Ready-000000?style=for-the-badge&logo=vercel)](https://vercel.com/)
 
 <p align="center">
-  <strong>An interactive space observatory where you can track live asteroids approaching Earth, simulate what happens if one strikes, and launch planetary defense missions to deflect them before it's too late.</strong>
+  <strong>An interactive space observatory where you can track live asteroids approaching Earth, simulate what happens if one strikes, and launch planetary defense missions to deflect them before it is too late.</strong>
 </p>
 
-[Explore Live Demo](#-one-click-deployment-to-vercel) • [How It Works](#-how-it-works-in-plain-english) • [Key Features](#-features-at-a-glance) • [Quickstart](#-run-locally)
+[Explore Live Demo](#one-click-deployment-to-vercel) | [How It Works](#what-is-impactscope-in-plain-english) | [Key Features](#features-at-a-glance) | [Quickstart](#run-locally)
 
 ---
 
 </div>
 
-## 🌌 What is ImpactScope? (In Plain English)
+## What is ImpactScope? (In Plain English)
 
-Every single day, thousands of space rocks (Near-Earth Objects or **NEOs**) zip through our solar neighborhood at speeds exceeding **70,000 km/h**. Most burn up harmlessly as shooting stars. But what would happen if a massive asteroid — the size of a skyscraper or a football stadium — was on a direct collision course with Earth?
+Every single day, thousands of space rocks (Near-Earth Objects or **NEOs**) zip through our solar neighborhood at speeds exceeding **70,000 km/h**. Most burn up harmlessly as shooting stars. But what would happen if a massive asteroid, the size of a skyscraper or a football stadium, was on a direct collision course with Earth?
 
 **ImpactScope** is an interactive, cinematic science observatory built for the **2025 NASA Space Apps Challenge**. It takes real, complex planetary physics and NASA telescope data and turns them into an intuitive, visually stunning experience that anyone can explore.
 
-You don't need a PhD in astrophysics to use it. Spin the Earth, pick an asteroid passing by this week, choose an impact target, and watch genuine science unfold in real-time 3D.
+You do not need a PhD in astrophysics to use it. Spin the Earth, pick an asteroid passing by this week, choose an impact target, and watch genuine science unfold in real-time 3D.
 
 ---
 
-## 🚀 Features At A Glance
+## Features At A Glance
 
-### 1. 🔭 Real NASA Radar & Telescope Feeds
+### 1. Real NASA Radar and Telescope Feeds
 ImpactScope connects directly to **NASA's NeoWs (Near Earth Object Web Service)** API:
 - Browse live, real-time asteroids currently tracked by NASA telescopes across the world.
 - Inspect real data: estimated diameter, approach velocity, miss distance, and hazard classifications.
 - Instant access to famous benchmark asteroids:
-  - **99942 Apophis** (the infamous 370-meter asteroid flying dangerously close in 2029)
+  - **99942 Apophis** (the infamous 370-meter asteroid flying close in 2029)
   - **101955 Bennu** (the rubble-pile asteroid sampled by NASA's OSIRIS-REx)
-  - **Dimorphos & Didymos** (the targets of NASA's historic DART deflection mission)
-  - **Chicxulub** (the 10-kilometer monster that wiped out the dinosaurs 66 million years ago)
+  - **Dimorphos and Didymos** (the targets of NASA's historic DART deflection mission)
+  - **Chicxulub** (the 10-kilometer asteroid that wiped out the dinosaurs 66 million years ago)
 
-### 2. 🌍 Interactive 3D Earth Observatory
+### 2. Interactive 3D Earth Observatory
 - **Full 3D Globe**: Rendered in Three.js with realistic topological elevation, atmospheric cloud layers, day/night shading, and starry deep-space backgrounds.
-- **Click-to-Target**: Click anywhere on the globe — oceans, deserts, mountains, or cities — to set the simulation coordinates.
+- **Click-to-Target**: Click anywhere on the globe (oceans, deserts, mountains, or cities) to set the simulation coordinates.
 - **Dynamic Camera Modes**: Switch between Orbital View, Atmospheric Entry Cam, Ground Zero Cam, or Split-Screen Mission Control.
 
-### 3. 💥 True Impact Physics & Consequence Engine
+### 3. True Impact Physics and Consequence Engine
 Curious about the damage? ImpactScope calculates the physics under the hood:
-- **Kinetic Energy & Megatons**: Converts the collision energy into TNT equivalents (e.g., *"Equivalent to 1,200 Megatons or 80,000 Hiroshima atomic bombs"*).
+- **Kinetic Energy and Megatons**: Converts collision energy into TNT equivalents (for example, "Equivalent to 1,200 Megatons or 80,000 Hiroshima atomic bombs").
 - **Crater Sizing**: Computes whether the asteroid punches a multi-kilometer crater or detonates as a high-altitude atmospheric **airburst** (like the 2013 Chelyabinsk meteor).
-- **Blast Waves & Thermal Radiation**: Shows the radius of destruction, hurricane-force wind zones, and thermal flash radius.
+- **Blast Waves and Thermal Radiation**: Shows the radius of destruction, hurricane-force wind zones, and thermal flash radius.
 - **Seismic Shock**: Computes the equivalent Richter/Moment Magnitude earthquake ($M_w$) triggered by the collision.
 - **Tsunami Warning**: If you strike an ocean coordinate, it simulates deep-water displacement waves.
 
-### 4. 🛡️ Planetary Defense Simulator (DART Mission Control)
-**Don't just watch Earth get hit — save it!**
+### 4. Planetary Defense Simulator (DART Mission Control)
+**Do not just watch Earth get hit: save it!**
 - Jump into the Planetary Defense module inspired by NASA's **DART (Double Asteroid Redirection Test)**.
 - Choose your deflection strategy:
   - **Kinetic Impactor**: Slam a high-velocity probe into the asteroid to nudge its orbital velocity ($\Delta v$).
@@ -63,13 +63,13 @@ Curious about the damage? ImpactScope calculates the physics under the hood:
   - **Standoff Nuclear Detonation**: Vaporize surface material to act as a rocket push.
 - Adjust warning time (from 1 year to 20 years) and see if your deflection arc clears Earth's gravitational collision zone!
 
-### 5. 🎓 Professor's Planetary Defense Academy
+### 5. Professor's Planetary Defense Academy
 A built-in interactive flight academy designed for students and space enthusiasts:
-- Explains the **Torino & Palermo Impact Hazard Scales**.
+- Explains the **Torino and Palermo Impact Hazard Scales**.
 - Breaks down asteroid compositions: **Stony (Silicate)**, **Metallic Iron-Nickel**, **Loose Rubble-Pile**, and **Porous Cometary Ice**.
 - Walkthroughs of famous historical impact events throughout Earth's history.
 
-### 6. 🎧 Dynamic Browser Audio Synthesis
+### 6. Dynamic Browser Audio Synthesis
 Built-in Web Audio synthesizer generating realistic soundscapes without external audio files:
 - Atmospheric entry plasma roars
 - Hypersonic sonic booms
@@ -78,33 +78,33 @@ Built-in Web Audio synthesizer generating realistic soundscapes without external
 
 ---
 
-## 🛠️ Technology Architecture
+## Technology Architecture
 
 ```
 ImpactScope Architecture
 │
-├── 🎨 Frontend (React 19 + Vite 8 + Three.js)
+├── Frontend (React 19 + Vite 8 + Three.js)
 │   ├── src/components/EarthViewport.tsx       <- High-performance 3D Earth, Asteroid meshes, Particle shaders
-│   ├── src/components/ProfessorAcademyDrawer.tsx <- Educational physics breakdown & telemetry
-│   ├── src/utils/asteroid3DGenerator.ts      <- Procedural 3D asteroid geometry & crater deformations
-│   ├── src/utils/impactPhysics.ts            <- Empirical crater scaling, Collins & Melosh airburst equations
+│   ├── src/components/ProfessorAcademyDrawer.tsx <- Educational physics breakdown and telemetry
+│   ├── src/utils/asteroid3DGenerator.ts      <- Procedural 3D asteroid geometry and crater deformations
+│   ├── src/utils/impactPhysics.ts            <- Empirical crater scaling, Collins and Melosh airburst equations
 │   └── src/utils/soundEngine.ts              <- Web Audio API real-time sound synthesizer
 │
-├── ⚡ Serverless API (Vercel / Express)
+├── Serverless API (Vercel / Express)
 │   ├── api/index.ts                          <- Vercel serverless function entrypoint
-│   ├── GET /api/neos                         <- Live NASA NeoWs fetcher with 2-minute caching & JPL fallback
+│   ├── GET /api/neos                         <- Live NASA NeoWs fetcher with 2-minute caching and JPL fallback
 │   ├── GET /api/neo/:id                      <- Detailed single NEO ephemeris lookup
 │   ├── POST /api/impact                      <- Impact consequence physics engine
-│   └── POST /api/deflect                     <- Planetary defense $\Delta v$ orbital deflection calculator
+│   └── POST /api/deflect                     <- Planetary defense orbital deflection calculator
 │
-└── 🌐 Deployment Configuration
+└── Deployment Configuration
     ├── vercel.json                           <- Fullstack Vite + Serverless Functions rewrite routing
     └── .vercelignore                         <- Bundle optimization rules
 ```
 
 ---
 
-## 💻 Run Locally
+## Run Locally
 
 ### Prerequisites
 - **Node.js** (v18 or higher recommended)
@@ -122,7 +122,7 @@ npm install
 ```
 
 ### Step 3: (Optional) Set up your NASA API Key
-ImpactScope works out of the box with built-in NASA telemetry! If you have your own personal API key from [api.nasa.gov](https://api.nasa.gov), create a `.env` file in the root directory:
+ImpactScope works out of the box with built-in NASA telemetry. If you have your own personal API key from [api.nasa.gov](https://api.nasa.gov), create a `.env` file in the root directory:
 ```env
 NASA_API_KEY=your_nasa_api_key_here
 ```
@@ -135,7 +135,7 @@ Open **[http://localhost:3000](http://localhost:3000)** in your browser to start
 
 ---
 
-## ☁️ One-Click Deployment to Vercel
+## One-Click Deployment to Vercel
 
 ImpactScope is fully configured for deployment on **[Vercel](https://vercel.com)**:
 
@@ -164,18 +164,18 @@ vercel --prod
 
 ---
 
-## 🔬 Scientific References & Formulae
+## Scientific References and Formulae
 
 ImpactScope's calculations are adapted from peer-reviewed planetary science methodologies:
 - **Kinetic Energy Formulation**: $E_k = \frac{1}{2} m v^2$
-- **Crater Sizing Models**: Adapted from Holsapple & Schmidt $\pi$-group scaling and Collins, Melosh & Marcus (*Earth Impact Effects Program*).
-- **Atmospheric Ram Pressure & Airburst**: Calculates stagnation pressure $P_{\text{ram}}(z) = \rho_{\text{air}}(z) \cdot v^2$ against internal tensile yield strength to determine explosive fragmentation altitude.
+- **Crater Sizing Models**: Adapted from Holsapple and Schmidt $\pi$-group scaling and Collins, Melosh and Marcus (*Earth Impact Effects Program*).
+- **Atmospheric Ram Pressure and Airburst**: Calculates stagnation pressure $P_{\text{ram}}(z) = \rho_{\text{air}}(z) \cdot v^2$ against internal tensile yield strength to determine explosive fragmentation altitude.
 - **Seismic Magnitude Correlation**: Gutenberg-Richter equivalent seismic energy formula $M_w = \frac{\log_{10}(E_{\text{seismic}}) - 4.8}{1.5}$.
 - **Planetary Defense Deflection**: Momentum enhancement coefficient ($\beta$-factor) scaling from NASA's **DART (Double Asteroid Redirection Test)** mission results published in *Nature* (2023).
 
 ---
 
-## 📜 License & Disclaimers
+## License and Disclaimers
 
 - Built for the **NASA Space Apps Challenge 2025** under the *"Meteor Madness"* challenge track.
 - **Disclaimer**: ImpactScope is designed for educational, research, and public communication purposes. For official planetary defense notices, consult the **NASA Planetary Defense Coordination Office (PDCO)** and **CNEOS (Center for Near Earth Object Studies)**.
