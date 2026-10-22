@@ -1,0 +1,6 @@
+.git
+.aistudio
+node_modules
+*.mp4
+.env
+.env.local

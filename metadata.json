@@ -1,0 +1,6 @@
+{
+  "name": "ImpactScope — Meteor Madness",
+  "description": "Cinematic 3D planetary defense observatory and NASA Near-Earth Object (NEO) asteroid impact physics simulator built for the 2025 NASA Space Apps Challenge.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

@@ -1,17 +1,11 @@
-# Python
+node_modules/
+build/
+dist/
+coverage/
+.DS_Store
+*.log
+.env*
+!.env.example
+.vercel
 __pycache__/
 *.pyc
-
-# Virtual environment
-venv/
-
-# Environment variables
-.env
-
-# VSCode / IDE stuff
-.vscode/
-.idea/
-
-# OS files
-.DS_Store
-Thumbs.db
